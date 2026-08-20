@@ -1,15 +1,48 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String  @id @default(cuid())
+  name        String
+  email       String  @unique
+  createdAt   DateTime @default(now())
+  workspaces  WorkspaceMember[]
+  documents   Document[]
+}
+
+model Workspace {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  createdAt   DateTime           @default(now())
+  members     WorkspaceMember[]
+  documents   Document[]
+}
+
+model WorkspaceMember {
+  id           String    @id @default(cuid())
+  userId       String
+  workspaceId  String
+  user         User      @relation(fields: [userId], references: [id])
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+}
+
+model Document {
+  id           String    @id @default(cuid())
+  title        String
+  content      String    @default("")
+  workspaceId  String
+  createdById  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  createdBy    User      @relation(fields: [createdById], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
